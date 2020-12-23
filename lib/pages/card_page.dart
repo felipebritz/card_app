@@ -1,4 +1,5 @@
 import 'package:card_app/models/card.dart';
+import 'package:card_app/services/card_services.dart';
 import 'package:card_app/theme/growdev_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -8,13 +9,19 @@ class CardPage extends StatefulWidget {
 }
 
 class _CardPageState extends State<CardPage> {
+  var _controllerTitle = TextEditingController();
+  var _controllerContent = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
-    CardGrowdev card;
+    CardGrowdev card = ModalRoute.of(context).settings.arguments;
+
+    _controllerTitle.text = card.title;
+    _controllerContent.text = card.content;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(card == null ? 'Card: Novo' : 'Card ${card.id}: Editar'),
+        title: Text(card.id == null ? 'Card: Novo' : 'Card ${card.id}: Editar'),
       ),
       body: Padding(
         padding: EdgeInsets.all(10),
@@ -25,6 +32,7 @@ class _CardPageState extends State<CardPage> {
                 child: Column(
                   children: [
                     TextField(
+                      controller: _controllerTitle,
                       decoration: InputDecoration(
                         hintText: 'Título',
                         border: OutlineInputBorder(),
@@ -32,6 +40,7 @@ class _CardPageState extends State<CardPage> {
                     ),
                     SizedBox(height: 20),
                     TextField(
+                      controller: _controllerContent,
                       maxLines: 10,
                       decoration: InputDecoration(
                         hintText: 'Conteúdo',
@@ -59,7 +68,29 @@ class _CardPageState extends State<CardPage> {
                     fontSize: 17,
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  card.title = _controllerTitle.text;
+                  card.content = _controllerContent.text;
+                  var cardService = CardService();
+                  if (card.id == null) {
+                    cardService.createCard(card).then(
+                      (value) {
+                        if (value > 0) {
+                          card.id = value;
+                          Navigator.pop(context, card);
+                        }
+                      },
+                    );
+                  } else {
+                    cardService.updateCard(card).then(
+                      (value) {
+                        if (value) {
+                          Navigator.pop(context);
+                        }
+                      },
+                    );
+                  }
+                },
               ),
             )
           ],

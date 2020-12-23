@@ -1,3 +1,6 @@
+import 'package:card_app/controllers/credential.dart';
+import 'package:card_app/models/user.dart';
+import 'package:card_app/services/card_services.dart';
 import 'package:card_app/theme/growdev_colors.dart';
 import 'package:card_app/utils/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +12,10 @@ class SingUpPage extends StatefulWidget {
 
 class _SingUpPageState extends State<SingUpPage> {
   bool _obscureText = true;
+  var _user = User();
+  var _controllerName = TextEditingController();
+  var _controllerEmail = TextEditingController();
+  var _controllerPassword = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +37,7 @@ class _SingUpPageState extends State<SingUpPage> {
                   ),
                   SizedBox(height: 60),
                   TextField(
+                    controller: _controllerName,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -61,6 +69,7 @@ class _SingUpPageState extends State<SingUpPage> {
                     height: 20,
                   ),
                   TextField(
+                    controller: _controllerEmail,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -92,6 +101,7 @@ class _SingUpPageState extends State<SingUpPage> {
                     height: 20,
                   ),
                   TextField(
+                    controller: _controllerPassword,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -148,7 +158,33 @@ class _SingUpPageState extends State<SingUpPage> {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.pushNamed(context, AppRoutes.listPage);
+                        _user.name = _controllerName.text;
+                        _user.email = _controllerEmail.text;
+                        _user.password = _controllerPassword.text;
+
+                        var serv = CardService();
+                        serv.signUp(_user).then(
+                          (signUpStatus) {
+                            if (signUpStatus) {
+                              serv.login(_user).then((loginStatus) {
+                                if (loginStatus) {
+                                  userCredential = _user;
+                                  Navigator.of(context).pushNamedAndRemoveUntil(
+                                    AppRoutes.listPage,
+                                    (Route<dynamic> route) => false,
+                                  );
+                                } else {
+                                  Navigator.of(context).pushNamedAndRemoveUntil(
+                                    AppRoutes.loginPage,
+                                    (Route<dynamic> route) => false,
+                                  );
+                                }
+                              });
+                            }
+                          },
+                        );
+
+                        // Navigator.pushNamed(context, AppRoutes.listPage);
                       },
                     ),
                   )

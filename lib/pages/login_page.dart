@@ -1,3 +1,6 @@
+import 'package:card_app/controllers/credential.dart';
+import 'package:card_app/models/user.dart';
+import 'package:card_app/services/card_services.dart';
 import 'package:card_app/theme/growdev_colors.dart';
 import 'package:card_app/utils/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +13,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool _checked = true;
   bool _obscureText = true;
+  var _user = User();
+  var _controllerEmail = TextEditingController(text: 'growdev@growdev.com');
+  var _controllerPassword = TextEditingController(text: 'growdev@2020');
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +50,9 @@ class _LoginPageState extends State<LoginPage> {
                         width: 5,
                       ),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.pushNamed(context, AppRoutes.signUpPage);
+                        },
                         child: Text(
                           'Crie a sua contra aqui',
                           style: TextStyle(
@@ -58,6 +66,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 40),
                   TextField(
+                    controller: _controllerEmail,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -89,6 +98,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: 20,
                   ),
                   TextField(
+                    controller: _controllerPassword,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -154,27 +164,48 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(
                     height: 30,
                   ),
-                  Container(
-                    width: double.infinity,
-                    height: 50,
-                    child: RaisedButton(
-                      color: laranjaGrowdev,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25.0),
-                      ),
-                      child: Text(
-                        'Entrar',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17,
+                  Builder(
+                    builder: (BuildContext ctx) {
+                      return Container(
+                        width: double.infinity,
+                        height: 50,
+                        child: RaisedButton(
+                          color: laranjaGrowdev,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25.0),
+                          ),
+                          child: Text(
+                            'Entrar',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                            ),
+                          ),
+                          onPressed: () {
+                            _user.email = _controllerEmail.text;
+                            _user.password = _controllerPassword.text;
+                            var serv = CardService();
+                            serv.login(_user).then((value) {
+                              if (value) {
+                                userCredential = _user;
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  AppRoutes.listPage,
+                                  (Route<dynamic> route) => false,
+                                );
+                              } else {
+                                Scaffold.of(ctx).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Dados inválidos.'),
+                                  ),
+                                );
+                              }
+                            });
+                          },
                         ),
-                      ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, AppRoutes.listPage);
-                      },
-                    ),
-                  )
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

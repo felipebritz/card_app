@@ -1,5 +1,8 @@
+import 'package:card_app/controllers/credential.dart';
 import 'package:card_app/models/card.dart';
+import 'package:card_app/services/card_services.dart';
 import 'package:card_app/theme/growdev_colors.dart';
+import 'package:card_app/utils/app_routes.dart';
 import 'package:flutter/material.dart';
 
 class ListPage extends StatefulWidget {
@@ -8,12 +11,18 @@ class ListPage extends StatefulWidget {
 }
 
 class _ListPageState extends State<ListPage> {
-  List<CardGrowdev> listCard = <CardGrowdev>[
-    CardGrowdev(id: 1, title: 'teste', content: 'content teste'),
-    CardGrowdev(id: 2, title: 'teste2', content: 'content teste2'),
-    CardGrowdev(id: 3, title: 'teste3', content: 'content teste3'),
-    CardGrowdev(id: 4, title: 'teste4', content: 'content teste4')
-  ];
+  var cardService = CardService();
+  List<CardGrowdev> listCard = <CardGrowdev>[];
+
+  @override
+  void initState() {
+    super.initState();
+    cardService.getAllCards().then((value) {
+      setState(() {
+        listCard = value;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +32,19 @@ class _ListPageState extends State<ListPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.add),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.cardPage,
+                arguments: CardGrowdev(),
+              ).then((value) {
+                if (value != null) {
+                  setState(() {
+                    listCard.add(value);
+                  });
+                }
+              });
+            },
           ),
         ],
       ),
@@ -43,12 +64,18 @@ class _ListPageState extends State<ListPage> {
                   size: 40,
                 ),
               ),
-              accountName: Text('Felipe'),
-              accountEmail: Text('teste@gmail.com'),
+              accountName: Text(userCredential.name),
+              accountEmail: Text(userCredential.email),
             ),
             ListTile(
               title: Text('Sair'),
-              onTap: () {},
+              onTap: () {
+                userCredential = null;
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.loginPage,
+                  (Route<dynamic> route) => false,
+                );
+              },
             ),
           ],
         ),
@@ -92,7 +119,7 @@ class _ListPageState extends State<ListPage> {
                       ),
                       Expanded(
                         child: Text(
-                          card.title,
+                          card.title == null ? '' : card.title,
                           style: TextStyle(
                             fontSize: 18,
                           ),
@@ -111,7 +138,7 @@ class _ListPageState extends State<ListPage> {
                     alignment: Alignment.topLeft,
                     height: 120,
                     child: Text(
-                      card.content,
+                      card.content == null ? '' : card.content,
                       textAlign: TextAlign.justify,
                       overflow: TextOverflow.fade,
                       maxLines: 7,
@@ -120,8 +147,36 @@ class _ListPageState extends State<ListPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      FlatButton(onPressed: () {}, child: Text('Excluir')),
-                      FlatButton(onPressed: () {}, child: Text('Editar')),
+                      FlatButton(
+                        onPressed: () {
+                          _showMyDialog().then(
+                            (value) {
+                              if (value) {
+                                cardService.deleteCard(card).then((value) {
+                                  if (value) {
+                                    setState(() {
+                                      listCard.removeAt(index);
+                                    });
+                                  }
+                                });
+                              }
+                            },
+                          );
+                        },
+                        child: Text('Excluir'),
+                      ),
+                      FlatButton(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.cardPage,
+                            arguments: card,
+                          ).then((_) {
+                            setState(() {});
+                          });
+                        },
+                        child: Text('Editar'),
+                      ),
                     ],
                   ),
                 ],
@@ -130,6 +185,40 @@ class _ListPageState extends State<ListPage> {
           );
         },
       ),
+    );
+  }
+
+  Future<bool> _showMyDialog() async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Excluir Card'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                Text('Exclusão de card!'),
+                Text('Você deseja excluir o card?'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text('Sim'),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+            TextButton(
+              child: Text('Não'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
